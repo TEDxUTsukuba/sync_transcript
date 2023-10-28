@@ -1,0 +1,56 @@
+steps:
+  - id: "build image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "${_GCR_HOSTNAME}/${PROJECT_ID}/${_REPOSITRY_NAME}/${_SERVICE_NAME}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}",
+        "--build-arg",
+        "NEXT_PUBLIC_FIREBASE_POSTS_COLLECTION=${_NEXT_PUBLIC_FIREBASE_POSTS_COLLECTION}",
+        ".",
+      ]
+
+  - id: "push image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "${_GCR_HOSTNAME}/${PROJECT_ID}/${_REPOSITRY_NAME}/${_SERVICE_NAME}",
+      ]
+
+  - id: "deploy"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "${_SERVICE_NAME}",
+        "--platform=$_PLATFORM",
+        "--region=${_REGION}",
+        "--image=${_GCR_HOSTNAME}/${PROJECT_ID}/${_REPOSITRY_NAME}/${_SERVICE_NAME}",
+        "--quiet",
+      ]
+
+substitutions:
+  _GCR_HOSTNAME: asia.gcr.io
+  _PLATFORM: managed
+  _REGION: asia-northeast1
+  _SERVICE_NAME: sync-transcript-web
+  _REPOSITRY_NAME: sync-transcript
+
+images:
+  - "${_GCR_HOSTNAME}/${PROJECT_ID}/${_REPOSITRY_NAME}/${_SERVICE_NAME}"
