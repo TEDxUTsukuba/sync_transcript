@@ -39,6 +39,7 @@ export default function Audience({ params }: { params: { id: string } }) {
     {} as transcriptData
   );
   const [firstTouch, setFirstTouch] = useState<boolean>(false);
+  const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
 
   useEffect(() => {
     var unsubscribe: any = null;
@@ -97,9 +98,13 @@ export default function Audience({ params }: { params: { id: string } }) {
       );
 
       if (targetTranscript) {
+        if (playAudio) {
+          playAudio.pause();
+        }
         setShowTranscriptData(targetTranscript);
 
         const audio = await new Audio(targetTranscript.voice_url);
+        setPlayAudio(audio);
         audio.play();
       }
     }
@@ -110,6 +115,7 @@ export default function Audience({ params }: { params: { id: string } }) {
   const handleFirstAudioPlay = async () => {
     const url = showTranscriptData.voice_url;
     const audio = new Audio(url);
+    setPlayAudio(audio);
     audio.play();
     setFirstTouch(true);
   };
