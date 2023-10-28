@@ -126,7 +126,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       {showTranscriptData.id && (
         <>
           <div
-            className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container h-20`}
+            className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
           >
             <p className="text-center text-3xl font-bold leading-loose">
               {showTranscriptData.transcript}
