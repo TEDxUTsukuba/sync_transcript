@@ -1,0 +1,19 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "files.watcherExclude": {
+    ".next/": true
+  },
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "icon": "check",
+      "background": "yellow",
+      "foreground": "black",
+      "fontWeight": "bold",
+      "gutterIcon": true
+    }
+  }
+}
