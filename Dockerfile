@@ -1,4 +1,4 @@
-FROM node:16.18.0-slim AS base
+FROM node:19.8.1-slim AS base
 WORKDIR /app
 
 COPY package.json yarn.lock ./
@@ -30,7 +30,7 @@ COPY --from=base /app ./
 RUN yarn build:next
 
 
-FROM node:16.18.0-slim AS node_modules
+FROM node:19.8.1-slim AS node_modules
 
 WORKDIR /modules
 
@@ -38,7 +38,7 @@ COPY package.json yarn.lock ./
 RUN yarn install --non-interactive --frozen-lockfile --production
 
 
-FROM node:16.18.0-slim
+FROM node:19.8.1-slim
 ENV NODE_ENV=production
 WORKDIR /app
 
