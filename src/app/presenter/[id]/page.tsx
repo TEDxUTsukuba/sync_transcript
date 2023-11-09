@@ -21,6 +21,7 @@ interface transcriptData {
   id: string;
   order: number;
   transcript: string;
+  script: string;
   voice_path: string;
 }
 
@@ -59,6 +60,7 @@ export default function Presenter({ params }: { params: { id: string } }) {
             id: doc.id,
             order: doc.data().order,
             transcript: doc.data().transcript,
+            script: doc.data().script,
             voice_path: doc.data().voice_path,
           });
         });
@@ -85,12 +87,66 @@ export default function Presenter({ params }: { params: { id: string } }) {
     });
   };
 
+  const clearSyncID = () => {
+    const presentationRef = doc(db, "presentation", params.id);
+    updateDoc(presentationRef, {
+      sync_id: "",
+    });
+  };
+
+  // 上下のキーでsync_idを更新する
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp") {
+        const currentIndex = transcriptsData.findIndex(
+          (transcript) => transcript.id == presentationData.sync_id
+        );
+        const nextIndex = currentIndex - 1;
+        if (nextIndex >= 0) {
+          const nextTranscriptId = transcriptsData[nextIndex].id;
+          handleOnClickTranscript(nextTranscriptId);
+        }
+      }
+      if (event.key === "ArrowDown") {
+        const currentIndex = transcriptsData.findIndex(
+          (transcript) => transcript.id == presentationData.sync_id
+        );
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < transcriptsData.length) {
+          const nextTranscriptId = transcriptsData[nextIndex].id;
+          handleOnClickTranscript(nextTranscriptId);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presentationData.sync_id, transcriptsData]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center">
-      <p>プレゼンター（管理者）</p>
-      <div>{presentationData.title}</div>
-      <div>{presentationData.sync_id}</div>
-      <div className="py-6 flex flex-col gap-3 px-6">
+    <main className="flex min-h-screen flex-col container mx-auto items-center">
+      <div className="py-2">
+        <p>
+          プレゼンター（管理者）- {presentationData.title} -{" "}
+          {presentationData.sync_id}
+        </p>
+        <p className="text-xs text-center text-gray-400">
+          上下キーでsync_idを更新できます。(クリックでも可)
+        </p>
+        <p className="text-xs text-center text-gray-400">
+          太文字の文章が観客に表示されます。
+        </p>
+      </div>
+      <button
+        onClick={clearSyncID}
+        className="bg-blue-500 text-white px-6 py-2 rounded-lg"
+      >
+        <span>初期化</span>
+        <span className="text-xs">（観客には何も表示されないようにする）</span>
+      </button>
+      <div className="py-6 flex flex-col w-full gap-3 px-6">
         {transcriptsData.map((transcript) => (
           <div
             className={`flex flex-col gap-2 px-3 py-1 rounded-lg border  ${
@@ -111,6 +167,9 @@ export default function Presenter({ params }: { params: { id: string } }) {
               }`}
             >
               {transcript.transcript}
+            </p>
+            <p className="text-sm text-gray-400">
+              {transcript.script || "スクリプトがありません"}
             </p>
           </div>
         ))}

@@ -12,6 +12,7 @@ import {
   query,
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
+import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
 
 interface PresentationData {
   title: string;
@@ -40,6 +41,7 @@ export default function Audience({ params }: { params: { id: string } }) {
   );
   const [firstTouch, setFirstTouch] = useState<boolean>(false);
   const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
+  const [isMute, setIsMute] = useState<boolean>(false);
 
   useEffect(() => {
     var unsubscribe: any = null;
@@ -93,6 +95,10 @@ export default function Audience({ params }: { params: { id: string } }) {
   useEffect(() => {
     async function playTranscriptAudio() {
       const modifiedSyncId = presentationData.sync_id;
+      if (!modifiedSyncId) {
+        setShowTranscriptData({} as transcriptData);
+        return;
+      }
       const targetTranscript = transcriptsData.find(
         (transcript) => transcript.id == modifiedSyncId
       );
@@ -110,7 +116,16 @@ export default function Audience({ params }: { params: { id: string } }) {
     }
 
     playTranscriptAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationData.sync_id, transcriptsData, firstTouch]);
+
+  useEffect(() => {
+    if (isMute) {
+      playAudio?.pause();
+    } else {
+      playAudio?.play();
+    }
+  }, [isMute, playAudio]);
 
   const handleFirstAudioPlay = async () => {
     const url = showTranscriptData.voice_url;
@@ -121,36 +136,57 @@ export default function Audience({ params }: { params: { id: string } }) {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center">
-      <p className="p-3 text-gray-500">観客側</p>
-      {showTranscriptData.id && (
-        <>
-          <div
-            className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
-          >
-            <p className="text-center text-3xl font-bold leading-loose">
-              {showTranscriptData.transcript}
-            </p>
-          </div>
-          <div className="fixed p-3 text-gray-400 top-0 left-0 text-xs">
-            <span>{presentationData.title}</span>
-          </div>
-          <div className="fixed p-3 text-gray-400 top-0 right-0 text-xs">
-            <span>{showTranscriptData.order}</span>
-          </div>
-          <div className="fixed p-3 text-gray-400 bottom-0 left-0 text-xs">
-            <span>ID : {presentationData.sync_id}</span>
-          </div>
-        </>
-      )}
+    <main className="flex min-h-screen flex-col items-center bg-black">
+      <div className="text-center">
+        <p className="p-3 text-gray-500">観客側</p>
+      </div>
+      <button
+        className={`border-2 rounded-full p-2 fixed bottom-3 left-1/2 -translate-x-1/2 ${
+          isMute ? "text-gray-400 border-gray-400" : "text-white border-white"
+        }}`}
+        onClick={() => setIsMute(!isMute)}
+      >
+        {isMute ? (
+          <BsFillVolumeMuteFill size="32"></BsFillVolumeMuteFill>
+        ) : (
+          <BsFillVolumeUpFill size="32"></BsFillVolumeUpFill>
+        )}
+      </button>
+      <div
+        className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
+      >
+        {showTranscriptData.transcript ? (
+          <p className="text-center text-3xl font-bold leading-loose text-white">
+            {showTranscriptData.transcript}
+          </p>
+        ) : (
+          <p className="text-center text-3xl font-bold text-gray-500">
+            しばらくお待ちください
+          </p>
+        )}
+      </div>
+      <div className="fixed p-3 text-gray-400 top-0 left-0 text-xs">
+        <span>{presentationData.title}</span>
+      </div>
+      <div className="fixed p-3 text-gray-400 top-0 right-0 text-xs">
+        <span>{showTranscriptData.order}</span>
+      </div>
+      <div className="fixed p-3 text-gray-400 bottom-0 left-0 text-xs">
+        <span>ID : {presentationData.sync_id}</span>
+      </div>
       {!firstTouch && (
-        <div className="bg-white fixed z-10 left-0 top-0 w-full h-full flex justify-center items-center">
-          <button
-            onClick={handleFirstAudioPlay}
-            className="bg-blue-500 text-white px-3 py-2 rounded-lg"
-          >
-            クリックしてください
-          </button>
+        <div className="bg-black fixed z-10 left-0 top-0 w-full h-full flex justify-center items-center">
+          <div className="flex flex-col gap-2">
+            <p className="text-center text-white text-xl">
+              {presentationData.title}
+            </p>
+            <button
+              onClick={handleFirstAudioPlay}
+              className="bg-blue-500 text-white px-3 py-2 rounded-lg"
+            >
+              クリックでスクリプト同期開始
+            </button>
+          </div>
         </div>
       )}
     </main>
