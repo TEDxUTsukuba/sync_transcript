@@ -85,12 +85,25 @@ export default function Presenter({ params }: { params: { id: string } }) {
     });
   };
 
+  const clearSyncID = () => {
+    const presentationRef = doc(db, "presentation", params.id);
+    updateDoc(presentationRef, {
+      sync_id: "",
+    });
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center">
+    <main className="flex min-h-screen flex-col container mx-auto items-center">
       <p>プレゼンター（管理者）</p>
       <div>{presentationData.title}</div>
       <div>{presentationData.sync_id}</div>
-      <div className="py-6 flex flex-col gap-3 px-6">
+      <button
+        onClick={clearSyncID}
+        className="bg-blue-500 text-white px-3 py-2 rounded-lg"
+      >
+        初期化
+      </button>
+      <div className="py-6 flex flex-col w-full gap-3 px-6">
         {transcriptsData.map((transcript) => (
           <div
             className={`flex flex-col gap-2 px-3 py-1 rounded-lg border  ${

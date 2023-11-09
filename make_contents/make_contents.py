@@ -21,11 +21,20 @@ def synthesize_text(text, language_code, gender):
 
     # Set the text input to be synthesized
     synthesis_input = texttospeech.SynthesisInput(text=text)
-
-    # Build the voice request, select the language code ("en-US") and the ssml
-    # voice gender ("neutral")
+    
+    if language_code == "en-US":
+        if gender == "MALE":
+            voice_name = "en-US-Wavenet-D"
+        else:
+            voice_name = "en-US-Wavenet-C"
+    else:
+        if gender == "MALE":
+            voice_name = "ja-JP-Neural2-C"
+        else:
+            voice_name = "ja-JP-Neural2-B"
+    
     voice = texttospeech.VoiceSelectionParams(
-        language_code=language_code, ssml_gender=gender
+        language_code=language_code, name=voice_name
     )
 
     # Select the type of audio file you want returned
@@ -73,16 +82,16 @@ def append_presentation(file_path, title):
         return Exception('言語が判定できませんでした')
 
     if 'M' in gender:
-        translate_voice_actor = texttospeech.SsmlVoiceGender.MALE
+        translate_voice_actor = "MALE"
     elif 'F' in gender:
-        translate_voice_actor = texttospeech.SsmlVoiceGender.FEMALE
+        translate_voice_actor = "FEMALE"
     else:
         # エラー処理
         return Exception('声優が判定できませんでした')
     
     db = firestore.client()
     presentations_ref = db.collection('presentation')
-    presentation_doc_ref = presentations_ref.document(name)
+    presentation_doc_ref = presentations_ref.document()
     
     presentation_doc_ref.set({
         'sync_id': '',
@@ -112,5 +121,6 @@ def append_presentation(file_path, title):
 
 
 if __name__ == "__main__":
-    # append_presentation('', '英語男性')
-    pass
+    file_path = input('ファイルパスを入力してください: ')
+    title = input('タイトルを入力してください: ')
+    append_presentation(file_path, title)
