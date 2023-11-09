@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 firebase-admin = "^6.2.0"
+google-cloud-texttospeech = "^2.14.2"
 
 
 [build-system]
