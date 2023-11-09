@@ -176,12 +176,17 @@ export default function Audience({ params }: { params: { id: string } }) {
       </div>
       {!firstTouch && (
         <div className="bg-black fixed z-10 left-0 top-0 w-full h-full flex justify-center items-center">
-          <button
-            onClick={handleFirstAudioPlay}
-            className="bg-blue-500 text-white px-3 py-2 rounded-lg"
-          >
-            クリックしてください
-          </button>
+          <div className="flex flex-col gap-2">
+            <p className="text-center text-white text-xl">
+              {presentationData.title}
+            </p>
+            <button
+              onClick={handleFirstAudioPlay}
+              className="bg-blue-500 text-white px-3 py-2 rounded-lg"
+            >
+              クリックでスクリプト同期開始
+            </button>
+          </div>
         </div>
       )}
     </main>
