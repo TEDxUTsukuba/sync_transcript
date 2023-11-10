@@ -75,10 +75,11 @@ def append_presentation(file_path, title):
     
     if 'EN' in lang:
         translate_language_code = 'ja-JP'
-    elif 'JP' in lang:
+    elif 'JA' in lang:
         translate_language_code = 'en-US'
     else:
         # エラー処理
+        print('言語が判定できませんでした')
         return Exception('言語が判定できませんでした')
 
     if 'M' in gender:
@@ -87,8 +88,10 @@ def append_presentation(file_path, title):
         translate_voice_actor = "FEMALE"
     else:
         # エラー処理
+        print('声優が判定できませんでした')
         return Exception('声優が判定できませんでした')
     
+    print("creating firestore document...")
     db = firestore.client()
     presentations_ref = db.collection('presentation')
     presentation_doc_ref = presentations_ref.document()
@@ -98,6 +101,7 @@ def append_presentation(file_path, title):
         'title': title,
     })
     
+    print("reading csv file...")
     data = read_scripts_csv_file(file_path)
     
     transcripts_ref = presentation_doc_ref.collection('transcripts')
@@ -105,7 +109,9 @@ def append_presentation(file_path, title):
     presentation_doc_id = presentation_doc_ref.id
     
     
+    print("synthesizing text...")
     for index, row in enumerate(data):
+        print(f"synthesizing {index}...")
         transcript_voice = synthesize_text(row['transcript'], translate_language_code, translate_voice_actor)
         
         voice_file_path = f'presentation/{presentation_doc_id}/{index}.mp3'

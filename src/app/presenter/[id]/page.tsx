@@ -5,16 +5,21 @@ import { db } from "../../../../firebase/database";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
   query,
   updateDoc,
+  where,
 } from "firebase/firestore";
+import Link from "next/link";
 
 interface PresentationData {
+  id: string;
   title: string;
   sync_id: string;
+  group: string;
 }
 
 interface transcriptData {
@@ -25,28 +30,77 @@ interface transcriptData {
   voice_path: string;
 }
 
+interface groupData {
+  id: string;
+  name: string;
+  presentation_sync_id: string;
+}
+
 export default function Presenter({ params }: { params: { id: string } }) {
+  const [groupData, setGroupData] = useState<groupData>({} as groupData);
   const [presentationData, setPresentationData] = useState<PresentationData>(
     {} as PresentationData
   );
   const [transcriptsData, setTranscriptsData] = useState<transcriptData[]>([]);
+  const [groupOtherPresentationData, setGroupOtherPresentationData] = useState<
+    PresentationData[]
+  >([]);
 
   useEffect(() => {
     var unsubscribe: any = null;
+    var groupUnsubscribe: any = null;
     function subscribe() {
-      console.log("params.id", params.id);
       unsubscribe = onSnapshot(
         doc(db, "presentation", params.id || "presentationId"),
         (doc) => {
           const data: any = doc.data();
-          console.log("data", data);
           const serializedData = {
+            id: doc.id,
             title: data.title || "",
             sync_id: data.sync_id || "",
+            group: data.group || "",
           };
+
+          if (serializedData.group && !groupUnsubscribe) {
+            subscribeGroup(serializedData.group);
+            getGroupOtherPresentation(serializedData.group);
+          }
+
           setPresentationData(serializedData);
         }
       );
+    }
+
+    function subscribeGroup(group_id: string) {
+      groupUnsubscribe = onSnapshot(doc(db, "groups", group_id), (doc) => {
+        console.log("serializedData", doc.data());
+        const data: any = doc.data();
+        const serializedData = {
+          id: doc.id,
+          name: data.name || "",
+          presentation_sync_id: data.presentation_sync_id || "",
+        };
+        setGroupData(serializedData);
+      });
+    }
+
+    async function getGroupOtherPresentation(group_id: string) {
+      const presentationRef = collection(db, "presentation");
+      const groupOtherPresentationRef = query(
+        presentationRef,
+        where("group", "==", group_id)
+      );
+      await getDocs(groupOtherPresentationRef).then((querySnapshot) => {
+        const data: any = [];
+        querySnapshot.forEach((doc) => {
+          data.push({
+            id: doc.id,
+            title: doc.data().title,
+            sync_id: doc.data().sync_id,
+          });
+        });
+        setGroupOtherPresentationData(data);
+      });
     }
 
     async function getAllTranscripts() {
@@ -64,7 +118,6 @@ export default function Presenter({ params }: { params: { id: string } }) {
             voice_path: doc.data().voice_path,
           });
         });
-        console.log("data", data);
         setTranscriptsData(data);
       });
     }
@@ -76,8 +129,11 @@ export default function Presenter({ params }: { params: { id: string } }) {
       if (unsubscribe) {
         unsubscribe();
       }
+      if (groupUnsubscribe) {
+        groupUnsubscribe();
+      }
     };
-  }, [params.id]);
+  }, [params.id, presentationData.group]);
 
   const handleOnClickTranscript = (transcriptId: string) => {
     // sync_idを更新する
@@ -125,8 +181,16 @@ export default function Presenter({ params }: { params: { id: string } }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationData.sync_id, transcriptsData]);
 
+  const setPresentationDataSyncId = () => {
+    console.log(groupData);
+    const groupRef = doc(db, "groups", groupData.id);
+    updateDoc(groupRef, {
+      presentation_sync_id: presentationData.id,
+    });
+  };
+
   return (
-    <main className="flex min-h-screen flex-col container mx-auto items-center">
+    <main className="flex min-h-screen flex-col gap-6 container mx-auto items-center">
       <div className="py-2">
         <p>
           プレゼンター（管理者）- {presentationData.title} -{" "}
@@ -139,6 +203,53 @@ export default function Presenter({ params }: { params: { id: string } }) {
           太文字の文章が観客に表示されます。
         </p>
       </div>
+      {groupData.presentation_sync_id !== presentationData.id && (
+        <div className="text-center">
+          <button
+            onClick={setPresentationDataSyncId}
+            className="bg-red-500 text-white px-6 py-2 rounded-lg"
+          >
+            <span>観客をこのプレゼンに遷移させる</span>
+          </button>
+          <p className="text-center text-red-500">
+            このボタンを押すと観客のページがこのプレゼンに切り替わります。注意してください。
+          </p>
+        </div>
+      )}
+      {groupOtherPresentationData.length > 0 && (
+        <div>
+          <div className="grid grid-cols-3 gap-3">
+            {groupOtherPresentationData.map((presentation) => (
+              <Link
+                href={`/presenter/${presentation.id}`}
+                key={presentation.id}
+                className={`${
+                  presentation.id == params.id
+                    ? " pointer-events-none cursor-default"
+                    : ""
+                }}`}
+              >
+                <div
+                  className={`flex flex-col gap-2 px-3 py-1 rounded-lg  ${
+                    presentation.id == params.id
+                      ? " bg-gray-200"
+                      : "hover:underline"
+                  } ${
+                    groupData.presentation_sync_id == presentation.id
+                      ? "border-green-300 border-2"
+                      : "border-gray-300 border"
+                  }`}
+                >
+                  <p className="text-sm text-center">{presentation.title}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <p className="text-center text-gray-400">
+            緑の枠線が観客が見ているプレゼンです。
+          </p>
+        </div>
+      )}
       <button
         onClick={clearSyncID}
         className="bg-blue-500 text-white px-6 py-2 rounded-lg"
