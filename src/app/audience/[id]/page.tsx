@@ -13,10 +13,16 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
+import { useRouter } from "next/navigation";
 
 interface PresentationData {
   title: string;
   sync_id: string;
+}
+
+interface GroupData {
+  name: string;
+  presentation_sync_id: string;
 }
 
 interface transcriptData {
@@ -32,9 +38,11 @@ interface audioData {
 }
 
 export default function Audience({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [presentationData, setPresentationData] = useState<PresentationData>(
     {} as PresentationData
   );
+  const [groupData, setGroupData] = useState<GroupData>({} as GroupData);
   const [transcriptsData, setTranscriptsData] = useState<transcriptData[]>([]);
   const [showTranscriptData, setShowTranscriptData] = useState<transcriptData>(
     {} as transcriptData
@@ -45,19 +53,41 @@ export default function Audience({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     var unsubscribe: any = null;
+    var groupUnsubscribe: any = null;
     function subscribe() {
       unsubscribe = onSnapshot(
         doc(db, "presentation", params.id || "presentationId"),
         (doc) => {
           const data: any = doc.data();
-          console.log("data", data);
           const serializedData = {
             title: data.title || "",
             sync_id: data.sync_id || "",
+            group: data.group || "",
           };
           setPresentationData(serializedData);
+          if (serializedData.group) {
+            subscribeGroup(serializedData.group);
+          }
         }
       );
+    }
+
+    function subscribeGroup(group_id: string) {
+      console.log("group_id", group_id);
+      groupUnsubscribe = onSnapshot(doc(db, "groups", group_id), (doc) => {
+        const data: any = doc.data();
+        const serializedData = {
+          name: data.name || "",
+          presentation_sync_id: data.presentation_sync_id || "",
+        };
+        if (
+          serializedData.presentation_sync_id &&
+          serializedData.presentation_sync_id !== presentationData.sync_id
+        ) {
+          router.push(`/audience/${serializedData.presentation_sync_id}`);
+        }
+        setGroupData(serializedData);
+      });
     }
 
     async function getAllTranscripts() {
@@ -89,8 +119,11 @@ export default function Audience({ params }: { params: { id: string } }) {
       if (unsubscribe) {
         unsubscribe();
       }
+      if (groupUnsubscribe) {
+        groupUnsubscribe();
+      }
     };
-  }, [params.id]);
+  }, [params.id, presentationData.sync_id, router]);
 
   useEffect(() => {
     async function playTranscriptAudio() {
