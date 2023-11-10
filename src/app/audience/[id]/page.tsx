@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 interface PresentationData {
   title: string;
   sync_id: string;
+  group: string;
 }
 
 interface GroupData {
@@ -65,7 +66,7 @@ export default function Audience({ params }: { params: { id: string } }) {
             group: data.group || "",
           };
           setPresentationData(serializedData);
-          if (serializedData.group) {
+          if (serializedData.group && !groupUnsubscribe) {
             subscribeGroup(serializedData.group);
           }
         }
@@ -73,7 +74,6 @@ export default function Audience({ params }: { params: { id: string } }) {
     }
 
     function subscribeGroup(group_id: string) {
-      console.log("group_id", group_id);
       groupUnsubscribe = onSnapshot(doc(db, "groups", group_id), (doc) => {
         const data: any = doc.data();
         const serializedData = {
@@ -123,7 +123,8 @@ export default function Audience({ params }: { params: { id: string } }) {
         groupUnsubscribe();
       }
     };
-  }, [params.id, presentationData.sync_id, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
 
   useEffect(() => {
     async function playTranscriptAudio() {
