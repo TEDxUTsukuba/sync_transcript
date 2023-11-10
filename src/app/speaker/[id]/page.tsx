@@ -148,7 +148,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       </div>
       <p
         style={{ fontSize: `${subFontSize}rem` }}
-        className="fixed top-12 left-1/2 text-gray-400 -translate-x-1/2 container text-center text-xl"
+        className="fixed top-12 left-1/2 text-gray-400 -translate-x-1/2 container text-center text-xl leading-loose"
       >
         {previousTranscriptData.script}
       </p>
@@ -170,7 +170,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       </div>
       <p
         style={{ fontSize: `${subFontSize}rem` }}
-        className="fixed bottom-12 left-1/2 text-gray-400 -translate-x-1/2 container text-center text-xl"
+        className="fixed bottom-12 left-1/2 text-gray-400 -translate-x-1/2 container text-center text-xl leading-loose"
       >
         {nextTranscriptData.script}
       </p>

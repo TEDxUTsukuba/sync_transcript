@@ -110,6 +110,7 @@ export default function Audience({ params }: { params: { id: string } }) {
         setShowTranscriptData(targetTranscript);
 
         const audio = await new Audio(targetTranscript.voice_url);
+        audio.playbackRate = 1.25;
         setPlayAudio(audio);
         audio.play();
       }
