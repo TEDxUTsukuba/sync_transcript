@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { db } from "../../../../firebase/database";
 import storage from "../../../../firebase/storage";
 import {
@@ -48,7 +48,6 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [showTranscriptData, setShowTranscriptData] = useState<transcriptData>(
     {} as transcriptData
   );
-  const [firstTouch, setFirstTouch] = useState<boolean>(false);
   const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
   const [fontSize, setFontSize] = useState<number>(1.8);
   const [isMute, setIsMute] = useState<boolean>(false);
@@ -153,7 +152,7 @@ export default function Audience({ params }: { params: { id: string } }) {
 
     playTranscriptAudio();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presentationData.sync_id, transcriptsData, firstTouch]);
+  }, [presentationData.sync_id, transcriptsData]);
 
   useEffect(() => {
     if (isMute) {
@@ -163,21 +162,22 @@ export default function Audience({ params }: { params: { id: string } }) {
     }
   }, [isMute, playAudio]);
 
-  const handleFirstAudioPlay = async () => {
-    const url = showTranscriptData.voice_url;
-    const audio = new Audio(url);
-    setPlayAudio(audio);
-    audio.play();
-    setFirstTouch(true);
-  };
+  useEffect(() => {
+    const defaultFontSize = localStorage.getItem("fontSize");
+    if (defaultFontSize) {
+      setFontSize(parseFloat(defaultFontSize));
+    }
+  }, []);
 
   const fontSizeUp = () => {
     setFontSize(fontSize + 0.2);
+    localStorage.setItem("fontSize", `${fontSize + 0.2}`);
   };
 
   const fontSizeDown = () => {
     if (fontSize <= 1.0) return;
     setFontSize(fontSize - 0.2);
+    localStorage.setItem("fontSize", `${fontSize - 0.2}`);
   };
 
   return (
@@ -236,21 +236,6 @@ export default function Audience({ params }: { params: { id: string } }) {
           +
         </button>
       </div>
-      {!firstTouch && (
-        <div className="bg-black fixed z-10 left-0 top-0 w-full h-full flex justify-center items-center">
-          <div className="flex flex-col gap-2">
-            <p className="text-center text-white text-xl">
-              {presentationData.title}
-            </p>
-            <button
-              onClick={handleFirstAudioPlay}
-              className="bg-blue-500 text-white px-3 py-2 rounded-lg"
-            >
-              クリックでスクリプト同期開始
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
