@@ -14,6 +14,7 @@ import {
 import { getDownloadURL, ref } from "firebase/storage";
 import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
 
 interface PresentationData {
   title: string;
@@ -50,6 +51,9 @@ export default function Audience({ params }: { params: { id: string } }) {
   );
   const [mainFontSize, setMainFontSize] = useState(1.8);
   const [subFontSize, setSubFontSize] = useState(1);
+
+  const mainFontSizeRef = useRef<HTMLInputElement>(null);
+  const subFontSizeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     var unsubscribe: any = null;
@@ -177,6 +181,25 @@ export default function Audience({ params }: { params: { id: string } }) {
     }
   }, [showTranscriptData.order, transcriptsData]);
 
+  useEffect(() => {
+    const defaultMainFontSize = localStorage.getItem("mainFontSize");
+    if (defaultMainFontSize) {
+      setMainFontSize(parseFloat(defaultMainFontSize));
+    }
+
+    const defaultSubFontSize = localStorage.getItem("subFontSize");
+    if (defaultSubFontSize) {
+      setSubFontSize(parseFloat(defaultSubFontSize));
+    }
+    console.log(defaultMainFontSize, defaultSubFontSize);
+  }, []);
+
+  const saveFontSize = () => {
+    console.log("save font size");
+    localStorage.setItem("mainFontSize", mainFontSize.toString());
+    localStorage.setItem("subFontSize", subFontSize.toString());
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="text-center">
@@ -220,14 +243,22 @@ export default function Audience({ params }: { params: { id: string } }) {
         <span>ID : {presentationData.sync_id}</span>
       </div>
       <div className="fixed p-3 bottom-0 right-0 flex gap-2">
-        <input
+        <button
+          onClick={() => saveFontSize()}
+          className="text-xs text-white border-white border rounded-md px-2 py-1"
+        >
+          保存
+        </button>
+        <Input
           type="number"
+          ref={mainFontSizeRef}
           defaultValue={mainFontSize}
           onChange={(e) => setMainFontSize(parseFloat(e.target.value))}
           className="border-2 rounded-lg h-6 w-16 text-xs bg-black text-white"
         />
-        <input
+        <Input
           type="number"
+          ref={subFontSizeRef}
           defaultValue={subFontSize}
           onChange={(e) => setSubFontSize(parseFloat(e.target.value))}
           className="border-2 rounded-lg h-6 w-16 text-xs bg-black text-white p-2"
