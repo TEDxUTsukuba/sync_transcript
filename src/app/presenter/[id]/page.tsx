@@ -47,6 +47,18 @@ export default function Presenter({ params }: { params: { id: string } }) {
   >([]);
 
   useEffect(() => {
+    // 選択している要素が画面に表示されるようにスクロールする
+    const element = document.getElementById(presentationData.sync_id);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    }
+  }, [presentationData.sync_id]);
+
+  useEffect(() => {
     var unsubscribe: any = null;
     var groupUnsubscribe: any = null;
     function subscribe() {
@@ -260,6 +272,7 @@ export default function Presenter({ params }: { params: { id: string } }) {
       <div className="py-6 flex flex-col w-full gap-3 px-6">
         {transcriptsData.map((transcript) => (
           <div
+            id={transcript.id}
             className={`flex flex-col gap-2 px-3 py-1 rounded-lg border  ${
               presentationData.sync_id == transcript.id
                 ? " border-green-500 border-2"
