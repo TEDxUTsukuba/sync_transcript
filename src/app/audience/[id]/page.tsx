@@ -214,6 +214,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       audio.load();
       loadedAudioDataList.push({ id: data.id, audio: audio });
     }
+    setAudioDataList(loadedAudioDataList);
     setSafariAction(false);
   };
 
