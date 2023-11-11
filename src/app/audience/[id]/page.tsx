@@ -51,13 +51,18 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
   const [fontSize, setFontSize] = useState<number>(1.8);
   const [isMute, setIsMute] = useState<boolean>(false);
-  const [safariAction, setSafariAction] = useState<boolean>(true);
+  const [safariAction, setSafariAction] = useState<boolean>(false);
 
   useEffect(() => {
     // ブラウザがSafariかどうか判定
-    const ua = window.navigator.userAgent.toLowerCase();
-    if (ua.indexOf("safari") !== -1 && ua.indexOf("chrome") === -1) {
-      setSafariAction(false);
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    if (userAgent.indexOf("safari") !== -1) {
+      if (userAgent.indexOf("chrome") > -1) {
+        // Chrome
+      } else {
+        // Safari
+        setSafariAction(true);
+      }
     }
   }, []);
 
@@ -255,7 +260,7 @@ export default function Audience({ params }: { params: { id: string } }) {
         </button>
       </div>
       {safariAction && (
-        <div className="fixed left-0 top-0 w-full h-full bg-black">
+        <div className="fixed left-0 top-0 w-full h-full bg-black z-10">
           <div className="w-full h-full flex justify-center items-center text-center">
             <button
               className="bg-blue-500 text-white px-3 py-2 rounded-lg"
