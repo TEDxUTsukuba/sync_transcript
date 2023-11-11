@@ -14,7 +14,6 @@ import {
 import { getDownloadURL, ref } from "firebase/storage";
 import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
 import { useRouter } from "next/navigation";
-import { set } from "firebase/database";
 
 interface PresentationData {
   title: string;
@@ -52,8 +51,10 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
   const [fontSize, setFontSize] = useState<number>(1.8);
   const [isMute, setIsMute] = useState<boolean>(false);
-  const [safariAction, setSafariAction] = useState<boolean>(false);
+  const [safariAction, setSafariAction] = useState<boolean>(true);
   const [audioDataList, setAudioDataList] = useState<audioData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadedAudioCount, setLoadedAudioCount] = useState<number>(0);
 
   useEffect(() => {
     // ブラウザがSafariかどうか判定
@@ -166,6 +167,7 @@ export default function Audience({ params }: { params: { id: string } }) {
 
         if (audioIndex !== -1) {
           setPlayAudio(audioDataList[audioIndex].audio);
+          audioDataList[audioIndex].audio.playbackRate = 1.5;
           audioDataList[audioIndex].audio.play();
           setPlayAudio(audioDataList[audioIndex].audio);
         } else {
@@ -208,20 +210,29 @@ export default function Audience({ params }: { params: { id: string } }) {
   };
 
   const handleOnSafariAction = () => {
+    setIsLoading(true);
     const loadedAudioDataList: audioData[] = [];
     for (let data of transcriptsData) {
-      const audio = new Audio(data.voice_url);
+      const audio = new Audio();
+      audio.src = data.voice_url;
+      audio.oncanplaythrough = () => {
+        setLoadedAudioCount((prev) => prev + 1);
+      };
       audio.load();
       loadedAudioDataList.push({ id: data.id, audio: audio });
     }
     setAudioDataList(loadedAudioDataList);
+    setIsLoading(false);
     setSafariAction(false);
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="text-center">
-        <p className="p-3 text-gray-500">観客側</p>
+        <p className="p-3 text-gray-500">
+          観客側 {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
+          loaded
+        </p>
       </div>
       <button
         className={`border-2 rounded-full p-2 fixed bottom-3 left-1/2 -translate-x-1/2 ${
@@ -278,10 +289,13 @@ export default function Audience({ params }: { params: { id: string } }) {
         <div className="fixed left-0 top-0 w-full h-full bg-black z-10">
           <div className="w-full h-full flex justify-center items-center text-center">
             <button
-              className="bg-blue-500 text-white px-3 py-2 rounded-lg"
-              onClick={handleOnSafariAction}
+              disabled={isLoading}
+              className={`text-white px-3 py-2 rounded-lg hover:opacity-80 ${
+                isLoading ? "bg-gray-400" : "bg-blue-500"
+              }`}
+              onClick={() => handleOnSafariAction()}
             >
-              ここをタップしてください
+              {isLoading ? "読み込み中" : "ここをタップしてください"}
             </button>
           </div>
         </div>
