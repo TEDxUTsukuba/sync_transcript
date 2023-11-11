@@ -52,6 +52,7 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [fontSize, setFontSize] = useState<number>(1.8);
   const [isMute, setIsMute] = useState<boolean>(false);
   const [safariAction, setSafariAction] = useState<boolean>(false);
+  const [audioDataList, setAudioDataList] = useState<audioData[]>([]);
 
   useEffect(() => {
     // ブラウザがSafariかどうか判定
@@ -157,10 +158,20 @@ export default function Audience({ params }: { params: { id: string } }) {
         }
         setShowTranscriptData(targetTranscript);
 
-        const audio = await new Audio(targetTranscript.voice_url);
-        audio.playbackRate = 1.5;
-        setPlayAudio(audio);
-        audio.play();
+        const audioIndex = audioDataList.findIndex(
+          (audioData) => audioData.id === targetTranscript.id
+        );
+
+        if (audioIndex !== -1) {
+          setPlayAudio(audioDataList[audioIndex].audio);
+          audioDataList[audioIndex].audio.play();
+          setPlayAudio(audioDataList[audioIndex].audio);
+        } else {
+          const audio = await new Audio(targetTranscript.voice_url);
+          audio.playbackRate = 1.5;
+          setPlayAudio(audio);
+          audio.play();
+        }
       }
     }
 
@@ -195,11 +206,12 @@ export default function Audience({ params }: { params: { id: string } }) {
   };
 
   const handleOnSafariAction = () => {
-    transcriptsData.forEach((transcript) => {
-      console.log(transcript.order);
-      const preAudio = new Audio(transcript.voice_url);
-      preAudio.load();
-    });
+    const loadedAudioDataList: audioData[] = [];
+    for (let data of transcriptsData) {
+      const audio = new Audio(data.voice_url);
+      audio.load();
+      loadedAudioDataList.push({ id: data.id, audio: audio });
+    }
     setSafariAction(false);
   };
 
