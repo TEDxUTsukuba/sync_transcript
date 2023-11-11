@@ -14,6 +14,7 @@ import {
 import { getDownloadURL, ref } from "firebase/storage";
 import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
 import { useRouter } from "next/navigation";
+import { set } from "firebase/database";
 
 interface PresentationData {
   title: string;
@@ -63,6 +64,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       } else {
         // Safari
         setSafariAction(true);
+        setIsMute(true);
       }
     }
   }, []);
