@@ -51,6 +51,15 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
   const [fontSize, setFontSize] = useState<number>(1.8);
   const [isMute, setIsMute] = useState<boolean>(false);
+  const [safariAction, setSafariAction] = useState<boolean>(true);
+
+  useEffect(() => {
+    // ブラウザがSafariかどうか判定
+    const ua = window.navigator.userAgent.toLowerCase();
+    if (ua.indexOf("safari") !== -1 && ua.indexOf("chrome") === -1) {
+      setSafariAction(false);
+    }
+  }, []);
 
   useEffect(() => {
     var unsubscribe: any = null;
@@ -180,6 +189,15 @@ export default function Audience({ params }: { params: { id: string } }) {
     localStorage.setItem("fontSize", `${fontSize - 0.2}`);
   };
 
+  const handleOnSafariAction = () => {
+    transcriptsData.forEach((transcript) => {
+      console.log(transcript.order);
+      const preAudio = new Audio(transcript.voice_url);
+      preAudio.load();
+    });
+    setSafariAction(false);
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="text-center">
@@ -236,6 +254,18 @@ export default function Audience({ params }: { params: { id: string } }) {
           +
         </button>
       </div>
+      {safariAction && (
+        <div className="fixed left-0 top-0 w-full h-full bg-black">
+          <div className="w-full h-full flex justify-center items-center text-center">
+            <button
+              className="bg-blue-500 text-white px-3 py-2 rounded-lg"
+              onClick={handleOnSafariAction}
+            >
+              ここをタップしてください
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
