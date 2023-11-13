@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../../../../firebase/database";
 import storage from "../../../../firebase/storage";
 import {
@@ -12,7 +12,6 @@ import {
   query,
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
-import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
 import { useRouter } from "next/navigation";
 
 interface PresentationData {
@@ -48,27 +47,9 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [showTranscriptData, setShowTranscriptData] = useState<transcriptData>(
     {} as transcriptData
   );
-  const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
   const [fontSize, setFontSize] = useState<number>(1.8);
-  const [isMute, setIsMute] = useState<boolean>(false);
-  const [safariAction, setSafariAction] = useState<boolean>(true);
-  const [audioDataList, setAudioDataList] = useState<audioData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadedAudioCount, setLoadedAudioCount] = useState<number>(0);
-
-  useEffect(() => {
-    // ブラウザがSafariかどうか判定
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    if (userAgent.indexOf("safari") !== -1) {
-      if (userAgent.indexOf("chrome") > -1) {
-        // Chrome
-      } else {
-        // Safari
-        setSafariAction(true);
-        setIsMute(true);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     var unsubscribe: any = null;
@@ -102,7 +83,7 @@ export default function Audience({ params }: { params: { id: string } }) {
           serializedData.presentation_sync_id &&
           serializedData.presentation_sync_id !== presentationData.sync_id
         ) {
-          router.push(`/audience/${serializedData.presentation_sync_id}`);
+          router.push(`/transcript/${serializedData.presentation_sync_id}`);
         }
         setGroupData(serializedData);
       });
@@ -156,40 +137,13 @@ export default function Audience({ params }: { params: { id: string } }) {
       );
 
       if (targetTranscript) {
-        if (playAudio) {
-          playAudio.pause();
-        }
         setShowTranscriptData(targetTranscript);
-
-        const audioIndex = audioDataList.findIndex(
-          (audioData) => audioData.id === targetTranscript.id
-        );
-
-        if (audioIndex !== -1) {
-          setPlayAudio(audioDataList[audioIndex].audio);
-          audioDataList[audioIndex].audio.playbackRate = 1.5;
-          audioDataList[audioIndex].audio.play();
-          setPlayAudio(audioDataList[audioIndex].audio);
-        } else {
-          const audio = await new Audio(targetTranscript.voice_url);
-          audio.playbackRate = 1.5;
-          setPlayAudio(audio);
-          audio.play();
-        }
       }
     }
 
     playTranscriptAudio();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationData.sync_id, transcriptsData]);
-
-  useEffect(() => {
-    if (isMute) {
-      playAudio?.pause();
-    } else {
-      playAudio?.play();
-    }
-  }, [isMute, playAudio]);
 
   useEffect(() => {
     const defaultFontSize = localStorage.getItem("fontSize");
@@ -209,23 +163,6 @@ export default function Audience({ params }: { params: { id: string } }) {
     localStorage.setItem("fontSize", `${fontSize - 0.2}`);
   };
 
-  const handleOnSafariAction = () => {
-    setIsLoading(true);
-    const loadedAudioDataList: audioData[] = [];
-    for (let data of transcriptsData) {
-      const audio = new Audio(data.voice_url);
-      // audio.src = ;
-      audio.oncanplaythrough = () => {
-        setLoadedAudioCount((prev) => prev + 1);
-      };
-      audio.load();
-      loadedAudioDataList.push({ id: data.id, audio: audio });
-    }
-    setAudioDataList(loadedAudioDataList);
-    setIsLoading(false);
-    setSafariAction(false);
-  };
-
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="text-center">
@@ -234,18 +171,6 @@ export default function Audience({ params }: { params: { id: string } }) {
           loaded
         </p>
       </div>
-      <button
-        className={`border-2 rounded-full p-2 fixed bottom-3 left-1/2 -translate-x-1/2 ${
-          isMute ? "text-gray-400 border-gray-400" : "text-white border-white"
-        }}`}
-        onClick={() => setIsMute(!isMute)}
-      >
-        {isMute ? (
-          <BsFillVolumeMuteFill size="32"></BsFillVolumeMuteFill>
-        ) : (
-          <BsFillVolumeUpFill size="32"></BsFillVolumeUpFill>
-        )}
-      </button>
       <div
         className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
       >
@@ -285,21 +210,6 @@ export default function Audience({ params }: { params: { id: string } }) {
           +
         </button>
       </div>
-      {safariAction && (
-        <div className="fixed left-0 top-0 w-full h-full bg-black z-10">
-          <div className="w-full h-full flex justify-center items-center text-center">
-            <button
-              disabled={isLoading}
-              className={`text-white px-3 py-2 rounded-lg hover:opacity-80 ${
-                isLoading ? "bg-gray-400" : "bg-blue-500"
-              }`}
-              onClick={() => handleOnSafariAction()}
-            >
-              {isLoading ? "読み込み中" : "ここをタップしてください"}
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
