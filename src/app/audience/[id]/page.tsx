@@ -43,7 +43,6 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [presentationData, setPresentationData] = useState<PresentationData>(
     {} as PresentationData
   );
-  const [groupData, setGroupData] = useState<GroupData>({} as GroupData);
   const [transcriptsData, setTranscriptsData] = useState<transcriptData[]>([]);
   const [showTranscriptData, setShowTranscriptData] = useState<transcriptData>(
     {} as transcriptData
@@ -104,7 +103,6 @@ export default function Audience({ params }: { params: { id: string } }) {
         ) {
           router.push(`/audience/${serializedData.presentation_sync_id}`);
         }
-        setGroupData(serializedData);
       });
     }
 
@@ -209,20 +207,25 @@ export default function Audience({ params }: { params: { id: string } }) {
     localStorage.setItem("fontSize", `${fontSize - 0.2}`);
   };
 
-  const handleOnSafariAction = () => {
-    setIsLoading(true);
-    const loadedAudioDataList: audioData[] = [];
-    for (let data of transcriptsData) {
-      const audio = new Audio(data.voice_url);
-      // audio.src = ;
-      audio.oncanplaythrough = () => {
-        setLoadedAudioCount((prev) => prev + 1);
-      };
-      audio.load();
-      loadedAudioDataList.push({ id: data.id, audio: audio });
+  const loadAudio = (index: number) => {
+    if (index >= transcriptsData.length) {
+      setIsLoading(false);
+      return;
     }
-    setAudioDataList(loadedAudioDataList);
-    setIsLoading(false);
+    const audio = new Audio(transcriptsData[index].voice_url);
+    audio.oncanplaythrough = () => {
+      setLoadedAudioCount((prev) => prev + 1);
+      loadAudio(index + 1);
+    };
+    audio.load();
+    setAudioDataList((prev) => [
+      ...prev,
+      { id: transcriptsData[index].id, audio: audio },
+    ]);
+  };
+
+  const handleOnSafariAction = () => {
+    loadAudio(0);
     setSafariAction(false);
   };
 
@@ -230,8 +233,9 @@ export default function Audience({ params }: { params: { id: string } }) {
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="text-center">
         <p className="p-3 text-gray-500">
-          観客側 {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
-          loaded
+          観客側 (音声データ
+          {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
+          loaded)
         </p>
       </div>
       <button
