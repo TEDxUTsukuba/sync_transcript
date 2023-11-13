@@ -44,13 +44,12 @@ export default function Audience({ params }: { params: { id: string } }) {
   const [presentationData, setPresentationData] = useState<PresentationData>(
     {} as PresentationData
   );
-  const [groupData, setGroupData] = useState<GroupData>({} as GroupData);
   const [transcriptsData, setTranscriptsData] = useState<transcriptData[]>([]);
   const [showTranscriptData, setShowTranscriptData] = useState<transcriptData>(
     {} as transcriptData
   );
-  const [mainFontSize, setMainFontSize] = useState(1.8);
-  const [subFontSize, setSubFontSize] = useState(1);
+  const [mainFontSize, setMainFontSize] = useState(3);
+  const [subFontSize, setSubFontSize] = useState(3);
 
   const mainFontSizeRef = useRef<HTMLInputElement>(null);
   const subFontSizeRef = useRef<HTMLInputElement>(null);
@@ -90,7 +89,6 @@ export default function Audience({ params }: { params: { id: string } }) {
         ) {
           router.push(`/speaker/${serializedData.presentation_sync_id}`);
         }
-        setGroupData(serializedData);
       });
     }
 
@@ -169,6 +167,19 @@ export default function Audience({ params }: { params: { id: string } }) {
   }, [showTranscriptData.order, transcriptsData]);
 
   const nextTranscriptData = useMemo(() => {
+    if (showTranscriptData.order === undefined) {
+      setTimeout(() => {
+        const targetTranscript = transcriptsData.find(
+          (item) => item.order == 0
+        );
+        if (targetTranscript) {
+          return targetTranscript;
+        } else {
+          return {} as transcriptData;
+        }
+      }, 1000);
+    }
+
     const order = showTranscriptData.order + 1;
     const targetTranscript = transcriptsData.find(
       (item) => item.order == order
@@ -179,7 +190,7 @@ export default function Audience({ params }: { params: { id: string } }) {
     } else {
       return {} as transcriptData;
     }
-  }, [showTranscriptData.order, transcriptsData]);
+  }, [transcriptsData, showTranscriptData.order]);
 
   useEffect(() => {
     const defaultMainFontSize = localStorage.getItem("mainFontSize");
@@ -205,34 +216,25 @@ export default function Audience({ params }: { params: { id: string } }) {
       <div className="text-center">
         <p className="p-3 text-gray-500">スピーカー</p>
       </div>
-      <p
-        style={{ fontSize: `${subFontSize}rem` }}
-        className="fixed top-12 left-1/2 text-gray-400 -translate-x-1/2 container text-center text-xl leading-loose"
-      >
-        {previousTranscriptData.script}
-      </p>
       <div
         className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
       >
-        {showTranscriptData.script ? (
+        <div className="flex flex-col gap-6">
           <p
-            className="text-center font-bold leading-loose text-white"
+            className="text-center leading-loose text-gray-500"
             style={{ fontSize: `${mainFontSize}rem` }}
           >
             {showTranscriptData.script}
           </p>
-        ) : (
-          <p className="text-center text-3xl font-bold text-gray-500">
-            しばらくお待ちください
+          <p className="text-center text-2xl">👇</p>
+          <p
+            style={{ fontSize: `${subFontSize}rem` }}
+            className="text-center font-bold  text-xl leading-loose text-white"
+          >
+            {nextTranscriptData.script}
           </p>
-        )}
+        </div>
       </div>
-      <p
-        style={{ fontSize: `${subFontSize}rem` }}
-        className="fixed bottom-12 left-1/2 text-gray-400 -translate-x-1/2 container text-center text-xl leading-loose"
-      >
-        {nextTranscriptData.script}
-      </p>
       <div className="fixed p-3 text-gray-400 top-0 left-0 text-xs">
         <span>{presentationData.title}</span>
       </div>
