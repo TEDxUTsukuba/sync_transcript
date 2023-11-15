@@ -216,8 +216,6 @@ export default function Audience({ params }: { params: { id: string } }) {
     audio.oncanplaythrough = () => {
       setLoadedAudioCount((prev) => prev + 1);
       loadAudio(index + 1);
-      audio.muted = true;
-      audio.play();
     };
     audio.load();
     setAudioDataList((prev) => [
