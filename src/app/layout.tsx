@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SyncScripter",
+  title: "SyncScripter | TEDxUTsukuba",
   description: "スクリプトを同期するアプリ",
 };
 
