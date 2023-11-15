@@ -110,20 +110,31 @@ export default function Audience({ params }: { params: { id: string } }) {
       const presentationRef = doc(db, "presentation", params.id);
       const transcriptRef = collection(presentationRef, "transcripts");
       const sortedByOrderTranscriptRef = query(transcriptRef, orderBy("order"));
-      await getDocs(sortedByOrderTranscriptRef).then((querySnapshot) => {
+      await getDocs(sortedByOrderTranscriptRef).then(async (querySnapshot) => {
         const data: any = [];
-        querySnapshot.forEach(async (doc) => {
-          const voice_path = doc.data().voice_path;
-          const voice_path_ref = ref(storage, voice_path);
-          const url = await getDownloadURL(voice_path_ref);
 
-          data.push({
-            id: doc.id,
-            order: doc.data().order,
-            transcript: doc.data().transcript,
-            voice_url: url,
-          });
+        // promiseを使って非同期処理を同期処理に変換
+        await Promise.all(
+          querySnapshot.docs.map(async (doc) => {
+            const voice_path = doc.data().voice_path;
+            const voice_path_ref = ref(storage, voice_path);
+            const url = await getDownloadURL(voice_path_ref);
+            data.push({
+              id: doc.id,
+              order: doc.data().order,
+              transcript: doc.data().transcript,
+              voice_url: url,
+            });
+          })
+        );
+
+        // order でソート
+        data.sort((a: any, b: any) => {
+          if (a.order < b.order) return -1;
+          if (a.order > b.order) return 1;
+          return 0;
         });
+
         setTranscriptsData(data);
       });
     }
