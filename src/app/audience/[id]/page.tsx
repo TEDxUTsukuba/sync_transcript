@@ -49,11 +49,14 @@ export default function Audience({ params }: { params: { id: string } }) {
   );
   const [playAudio, setPlayAudio] = useState<HTMLAudioElement>();
   const [fontSize, setFontSize] = useState<number>(1.8);
-  const [isMute, setIsMute] = useState<boolean>(false);
+  const [isMute, setIsMute] = useState<boolean>(true);
   const [safariAction, setSafariAction] = useState<boolean>(true);
   const [audioDataList, setAudioDataList] = useState<audioData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadedAudioCount, setLoadedAudioCount] = useState<number>(0);
+  const [isFetchingPresentationData, setIsFetchingPresentationData] =
+    useState<boolean>(true);
+  const [noAudio, setNoAudio] = useState<boolean>(false);
 
   useEffect(() => {
     // ブラウザがSafariかどうか判定
@@ -136,6 +139,7 @@ export default function Audience({ params }: { params: { id: string } }) {
         });
 
         setTranscriptsData(data);
+        setIsFetchingPresentationData(false);
       });
     }
 
@@ -240,27 +244,36 @@ export default function Audience({ params }: { params: { id: string } }) {
     setSafariAction(false);
   };
 
+  const handleNoloadAudio = () => {
+    setNoAudio(true);
+    setSafariAction(false);
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
-      <div className="text-center">
-        <p className="p-3 text-gray-500">
-          観客側 (音声データ
-          {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
-          loaded)
-        </p>
-      </div>
-      <button
-        className={`border-2 rounded-full p-2 fixed bottom-3 left-1/2 -translate-x-1/2 ${
-          isMute ? "text-gray-400 border-gray-400" : "text-white border-white"
-        }}`}
-        onClick={() => setIsMute(!isMute)}
-      >
-        {isMute ? (
-          <BsFillVolumeMuteFill size="32"></BsFillVolumeMuteFill>
-        ) : (
-          <BsFillVolumeUpFill size="32"></BsFillVolumeUpFill>
-        )}
-      </button>
+      {!noAudio && (
+        <div className="text-center">
+          <p className="p-3 text-gray-500 text-xs">
+            音声データ
+            {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
+            loaded
+          </p>
+        </div>
+      )}
+      {!noAudio && (
+        <button
+          className={`border-2 rounded-full p-2 fixed bottom-3 left-1/2 -translate-x-1/2 ${
+            isMute ? "text-gray-400 border-gray-400" : "text-white border-white"
+          }}`}
+          onClick={() => setIsMute(!isMute)}
+        >
+          {isMute ? (
+            <BsFillVolumeMuteFill size="32"></BsFillVolumeMuteFill>
+          ) : (
+            <BsFillVolumeUpFill size="32"></BsFillVolumeUpFill>
+          )}
+        </button>
+      )}
       <div
         className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
       >
@@ -303,15 +316,46 @@ export default function Audience({ params }: { params: { id: string } }) {
       {safariAction && (
         <div className="fixed left-0 top-0 w-full h-full bg-black z-10">
           <div className="w-full h-full flex justify-center items-center text-center">
-            <button
-              disabled={isLoading}
-              className={`text-white px-3 py-2 rounded-lg hover:opacity-80 ${
-                isLoading ? "bg-gray-400" : "bg-blue-500"
-              }`}
-              onClick={() => handleOnSafariAction()}
-            >
-              {isLoading ? "読み込み中" : "ここをタップしてください"}
-            </button>
+            {isFetchingPresentationData ? (
+              <div className="flex flex-col gap-3 justify-center items-center p-3">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-200"></div>
+                <p className="text-white text-2xl">読み込み中</p>
+                <p className="text-white text-sm">
+                  この読み込みには時間がかかる場合があります。
+                </p>
+                <div className="border border-white rounded-lg p-3 my-6">
+                  <p className="text-white text-lg -mt-6 text-center">
+                    <span className="bg-black px-3">使い方</span>
+                  </p>
+                  <p className="text-white">
+                    スピーカーと同期して翻訳音声をイヤホンから聴くことができるシステムです。
+                  </p>
+                  <p>
+                    <b className="text-yellow-400">
+                      必ずイヤホンをつけた状態でご利用ください。
+                    </b>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6 justify-center items-center p-3">
+                <button
+                  disabled={isLoading}
+                  className={`text-white px-3 py-2 rounded-lg hover:opacity-80 ${
+                    isLoading ? "bg-gray-400" : "bg-blue-500"
+                  }`}
+                  onClick={() => handleOnSafariAction()}
+                >
+                  {isLoading ? "読み込み中" : "音声データの読み込みを開始する"}
+                </button>
+                <button
+                  className="text-white px-3 py-2 rounded-lg text-sm hover:underline"
+                  onClick={() => handleNoloadAudio()}
+                >
+                  読み込まずに開始する
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
