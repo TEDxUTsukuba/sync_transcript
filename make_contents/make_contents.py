@@ -62,7 +62,10 @@ def read_scripts_csv_file(file_path):
         reader = csv.DictReader(csvfile)
         data = []
         for row in reader:
-            data.append({'script': row['script'], 'transcript': row['transcript']})
+            # 空白行は無視
+            if row['script'] != '' and row['transcript'] != '':
+                print(row['script'], row['transcript'])
+                data.append({'script': row['script'], 'transcript': row['transcript']})
         return data
 
 

@@ -202,16 +202,16 @@ export default function Presenter({ params }: { params: { id: string } }) {
   };
 
   return (
-    <main className="flex min-h-screen flex-col gap-6 container mx-auto items-center">
+    <main className="flex min-h-screen flex-col text-white bg-black gap-6 container mx-auto items-center">
       <div className="py-2">
-        <p>
+        <p className="text-white">
           プレゼンター（管理者）- {presentationData.title} -{" "}
           {presentationData.sync_id}
         </p>
-        <p className="text-xs text-center text-gray-400">
+        <p className="text-xs text-center text-gray-200">
           上下キーでsync_idを更新できます。(クリックでも可)
         </p>
-        <p className="text-xs text-center text-gray-400">
+        <p className="text-xs text-center text-gray-200">
           太文字の文章が観客に表示されます。
         </p>
       </div>
@@ -242,9 +242,9 @@ export default function Presenter({ params }: { params: { id: string } }) {
                 }}`}
               >
                 <div
-                  className={`flex flex-col gap-2 px-3 py-1 rounded-lg  ${
+                  className={`flex flex-col text-white gap-2 px-3 py-1 rounded-lg  ${
                     presentation.id == params.id
-                      ? " bg-gray-200"
+                      ? " bg-gray-700"
                       : "hover:underline"
                   } ${
                     groupData.presentation_sync_id == presentation.id
@@ -257,7 +257,7 @@ export default function Presenter({ params }: { params: { id: string } }) {
               </Link>
             ))}
           </div>
-          <p className="text-center text-gray-400">
+          <p className="text-center text-gray-200">
             緑の枠線が観客が見ているプレゼンです。
           </p>
         </div>
@@ -281,7 +281,7 @@ export default function Presenter({ params }: { params: { id: string } }) {
             key={transcript.id}
             onClick={() => handleOnClickTranscript(transcript.id)}
           >
-            <div className="flex gap-2 text-sm text-gray-400">
+            <div className="flex gap-2 text-sm text-gray-200">
               <span>{transcript.order}</span>
               <span>{transcript.voice_path}</span>
             </div>
@@ -292,7 +292,7 @@ export default function Presenter({ params }: { params: { id: string } }) {
             >
               {transcript.transcript}
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-200">
               {transcript.script || "スクリプトがありません"}
             </p>
           </div>
