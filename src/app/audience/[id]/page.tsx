@@ -180,7 +180,6 @@ export default function Audience({ params }: { params: { id: string } }) {
           );
 
           if (audioIndex !== -1) {
-            setPlayAudio(audioDataList[audioIndex].audio);
             audioDataList[audioIndex].audio.playbackRate = 1.4;
             audioDataList[audioIndex].audio.play();
             setPlayAudio(audioDataList[audioIndex].audio);
@@ -190,7 +189,7 @@ export default function Audience({ params }: { params: { id: string } }) {
             setPlayAudio(audio);
             audio.play();
           }
-        }, 600);
+        }, 1000);
       }
     }
 
