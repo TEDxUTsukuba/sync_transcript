@@ -104,7 +104,7 @@ export default function Audience({ params }: { params: { id: string } }) {
           serializedData.presentation_sync_id &&
           serializedData.presentation_sync_id !== presentationData.sync_id
         ) {
-          router.push(`/audience-debug/${serializedData.presentation_sync_id}`);
+          router.push(`/audience-old/${serializedData.presentation_sync_id}`);
         }
       });
     }
@@ -169,26 +169,28 @@ export default function Audience({ params }: { params: { id: string } }) {
       );
 
       if (targetTranscript) {
-        if (playAudio) {
-          playAudio.pause();
-        }
-        setShowTranscriptData(targetTranscript);
+        setTimeout(() => {
+          if (playAudio) {
+            playAudio.pause();
+          }
+          setShowTranscriptData(targetTranscript);
 
-        const audioIndex = audioDataList.findIndex(
-          (audioData) => audioData.id === targetTranscript.id
-        );
+          const audioIndex = audioDataList.findIndex(
+            (audioData) => audioData.id === targetTranscript.id
+          );
 
-        if (audioIndex !== -1) {
-          setPlayAudio(audioDataList[audioIndex].audio);
-          audioDataList[audioIndex].audio.playbackRate = 1.5;
-          audioDataList[audioIndex].audio.play();
-          setPlayAudio(audioDataList[audioIndex].audio);
-        } else {
-          const audio = await new Audio(targetTranscript.voice_url);
-          audio.playbackRate = 1.5;
-          setPlayAudio(audio);
-          audio.play();
-        }
+          if (audioIndex !== -1) {
+            setPlayAudio(audioDataList[audioIndex].audio);
+            audioDataList[audioIndex].audio.playbackRate = 1.4;
+            audioDataList[audioIndex].audio.play();
+            setPlayAudio(audioDataList[audioIndex].audio);
+          } else {
+            const audio = new Audio(targetTranscript.voice_url);
+            audio.playbackRate = 1.4;
+            setPlayAudio(audio);
+            audio.play();
+          }
+        }, 600);
       }
     }
 
@@ -240,16 +242,7 @@ export default function Audience({ params }: { params: { id: string } }) {
   };
 
   const handleOnSafariAction = () => {
-    const loadedAudioDataList: audioData[] = [];
-    for (let data of transcriptsData) {
-      const audio = new Audio(data.voice_url);
-      audio.load();
-      audio.oncanplaythrough = () => {
-        setLoadedAudioCount((prev) => prev + 1);
-      };
-      loadedAudioDataList.push({ id: data.id, audio: audio });
-    }
-    setAudioDataList(loadedAudioDataList);
+    loadAudio(0);
     setSafariAction(false);
   };
 
