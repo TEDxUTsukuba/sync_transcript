@@ -164,7 +164,7 @@ export default function Audience({ params }: { params: { id: string } }) {
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div
-        className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
+        className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen p-6 flex flex-col justify-center items-center gap-6`}
       >
         {showTranscriptData.transcript ? (
           <p
