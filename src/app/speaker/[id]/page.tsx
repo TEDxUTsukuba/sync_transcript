@@ -220,7 +220,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       >
         <div className="flex flex-col gap-6">
           <p
-            className="text-center leading-loose text-gray-500"
+            className="text-center leading-loose text-white"
             style={{ fontSize: `${mainFontSize}rem` }}
           >
             {showTranscriptData.script}
@@ -228,7 +228,7 @@ export default function Audience({ params }: { params: { id: string } }) {
           <p className="text-center text-2xl">👇</p>
           <p
             style={{ fontSize: `${subFontSize}rem` }}
-            className="text-center font-bold  text-xl leading-loose text-white"
+            className="text-center font-bold  text-xl leading-loose text-gray-500"
           >
             {nextTranscriptData.script}
           </p>
