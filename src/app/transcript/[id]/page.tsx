@@ -48,8 +48,6 @@ export default function Audience({ params }: { params: { id: string } }) {
     {} as transcriptData
   );
   const [fontSize, setFontSize] = useState<number>(1.8);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadedAudioCount, setLoadedAudioCount] = useState<number>(0);
 
   useEffect(() => {
     var unsubscribe: any = null;
@@ -165,12 +163,6 @@ export default function Audience({ params }: { params: { id: string } }) {
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
-      <div className="text-center">
-        <p className="p-3 text-gray-500">
-          観客側 {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
-          loaded
-        </p>
-      </div>
       <div
         className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 container`}
       >
