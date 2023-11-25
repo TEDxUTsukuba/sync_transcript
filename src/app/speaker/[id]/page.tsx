@@ -12,7 +12,6 @@ import {
   query,
 } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
-import { BsFillVolumeMuteFill, BsFillVolumeUpFill } from "react-icons/bs";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 
