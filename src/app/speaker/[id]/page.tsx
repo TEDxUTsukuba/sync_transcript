@@ -216,7 +216,7 @@ export default function Audience({ params }: { params: { id: string } }) {
         <p className="p-3 text-gray-500">スピーカー</p>
       </div>
       <div
-        className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen p-6`}
+        className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen p-6 flex flex-col justify-center items-center gap-6`}
       >
         <div className="flex flex-col gap-6">
           <p
