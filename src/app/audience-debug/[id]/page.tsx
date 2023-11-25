@@ -264,7 +264,7 @@ export default function Audience({ params }: { params: { id: string } }) {
         <div className="text-center">
           <p className="p-3 text-gray-500 text-xs">
             音声データ
-            {Math.ceil((100 * loadedAudioCount) / transcriptsData.length)}%
+            {Math.ceil(100 * (loadedAudioCount / transcriptsData.length))}%
             loaded
           </p>
         </div>
