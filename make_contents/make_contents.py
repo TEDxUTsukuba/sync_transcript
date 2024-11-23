@@ -69,7 +69,7 @@ def read_scripts_csv_file(file_path):
         return data
 
 
-def append_presentation(file_path, title):
+def append_presentation(file_path, title, group):
     # file_pathからファイル名を取得
     file_name = file_path.split('/')[-1]
     
@@ -102,6 +102,7 @@ def append_presentation(file_path, title):
     presentation_doc_ref.set({
         'sync_id': '',
         'title': title,
+        'group': group,
     })
     
     print("reading csv file...")
@@ -131,5 +132,14 @@ def append_presentation(file_path, title):
 
 if __name__ == "__main__":
     file_path = input('ファイルパスを入力してください: ')
-    title = input('タイトルを入力してください: ')
-    append_presentation(file_path, title)
+    
+    file_name = file_path.split('/')[-1]
+    name, lang, gender = file_name.split('_')
+    
+    title = input(f'タイトルを入力してください(default: {name}): ')
+    
+    if title == '':
+        title = name
+        
+    group = input('グループを入力してください: ')
+    append_presentation(file_path, title, group)
