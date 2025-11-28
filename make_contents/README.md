@@ -16,13 +16,9 @@
 ### セットアップ
 
 ```bash
-cd make_contents
-python3 -m venv .venv
-source .venv/bin/activate
-pip install .
+uv sync
+uv run python make_contents.py
 ```
-
-- 既存の仮想環境がある場合は `pip install -e .` でも構いません。
 
 ### CSV フォーマット
 
@@ -54,3 +50,6 @@ $ python make_contents.py
 - 言語コードは `EN` -> `ja-JP`, `JA` -> `en-US` に固定で変換されます。その他の言語・性別は現状サポートしていません。
 - 実行中に音声合成を大量に行うため、Google Cloud の課金に注意してください。
 - Firestore/Storage への書き込み権限を持つサービスアカウントを使用してください。
+- システムを利用する際には観客側の閲覧権限を与える必要があります
+  - ここでコンテンツを登録しても勝手に観客側で見られるわけではありません。
+  - Firebase の database ルールやストレージルールを変更して閲覧できるように設定してください。

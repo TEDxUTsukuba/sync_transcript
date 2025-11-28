@@ -5,7 +5,6 @@ import { db } from "../../../../../firebase/database";
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -13,7 +12,6 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import Link from "next/link";
 
 interface PresentationData {
   id: string;
@@ -70,6 +68,28 @@ export default function Presenter({ params }: { params: { id: string } }) {
       },
     ];
   }, [params.id]);
+
+  const audiencePresentation = useMemo(() => {
+    if (!groupData.presentation_sync_id) return null;
+    if (groupData.presentation_sync_id === presentationData.id) {
+      return presentationData;
+    }
+    return (
+      groupOtherPresentationData.find(
+        (item) => item.id === groupData.presentation_sync_id
+      ) || null
+    );
+  }, [
+    groupData.presentation_sync_id,
+    presentationData,
+    groupOtherPresentationData,
+  ]);
+
+  const viewingPresentation = presentationData.id ? presentationData : null;
+  const isViewingSameAsAudience =
+    audiencePresentation && viewingPresentation
+      ? audiencePresentation.id === viewingPresentation.id
+      : false;
 
   const handleCopyUrl = async (label: string, url: string) => {
     try {
@@ -244,8 +264,57 @@ export default function Presenter({ params }: { params: { id: string } }) {
           上下キーでsync_idを更新できます。(クリックでも可)
         </p>
         <p className="text-xs text-center text-gray-200">
-          太文字の文章が観客に表示されます。
+          緑 = 観客に投影中 / 青 = 管理画面のみで閲覧中
         </p>
+      </div>
+      <div className="w-full max-w-4xl grid gap-4 px-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-green-400/80 bg-green-500/5 px-5 py-4 shadow-inner">
+          <p className="text-xs font-semibold tracking-widest text-green-300">
+            観客に投影中
+          </p>
+          {audiencePresentation ? (
+            <>
+              <p className="text-lg font-bold text-white">
+                {audiencePresentation.title}
+              </p>
+              <p className="text-xs text-gray-400">
+                Presentation ID: {audiencePresentation.id}
+              </p>
+              <p className="text-xs text-gray-300 mt-2">
+                観客の端末とスクリーンはこのプレゼンが表示されています。
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400">
+              まだ観客に表示されているプレゼンがありません。
+            </p>
+          )}
+        </div>
+        <div className="rounded-2xl border border-sky-400/80 bg-sky-500/5 px-5 py-4 shadow-inner">
+          <p className="text-xs font-semibold tracking-widest text-sky-300">
+            管理画面で閲覧中
+          </p>
+          {viewingPresentation ? (
+            <>
+              <p className="text-lg font-bold text-white">
+                {viewingPresentation.title}
+              </p>
+              <p className="text-xs text-gray-400">
+                Presentation ID: {viewingPresentation.id}
+              </p>
+              <p className="text-xs text-gray-300 mt-2">
+                この画面で表示・操作しているプレゼンです。
+                {isViewingSameAsAudience
+                  ? "（観客と同期中）"
+                  : "（観客とは別）"}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400">
+              閲覧中のプレゼンを選択してください。
+            </p>
+          )}
+        </div>
       </div>
       {groupData.presentation_sync_id !== presentationData.id && (
         <div className="text-center">
@@ -262,27 +331,44 @@ export default function Presenter({ params }: { params: { id: string } }) {
       )}
       {groupOtherPresentationData.length > 0 && (
         <div>
-          <div className="grid grid-cols-3 gap-3">
-            {groupOtherPresentationData.map((presentation) => (
-              <button
-                key={presentation.id}
-                onClick={() => setSelectPresentationId(presentation.id)}
-                className={`flex flex-col text-white gap-2 px-3 py-1 rounded-lg  ${
-                  presentation.id == params.id
-                    ? " bg-gray-700"
-                    : "hover:underline"
-                } ${
-                  groupData.presentation_sync_id == presentation.id
-                    ? "border-green-300 border-2"
-                    : "border-gray-300 border"
-                }`}
-              >
-                <p className="text-sm text-center">{presentation.title}</p>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {groupOtherPresentationData.map((presentation) => {
+              const isAudiencePresentation =
+                presentation.id === groupData.presentation_sync_id;
+              const isViewingPresentation =
+                presentation.id === presentationData.id;
+              return (
+                <button
+                  key={presentation.id}
+                  onClick={() => setSelectPresentationId(presentation.id)}
+                  aria-pressed={isViewingPresentation}
+                  className={`flex flex-col text-white gap-2 rounded-lg border-2 px-4 py-3 text-left transition-colors ${
+                    isAudiencePresentation
+                      ? "border-green-400 bg-green-500/10"
+                      : isViewingPresentation
+                      ? "border-sky-400 bg-sky-500/10"
+                      : "border-gray-700 bg-gray-900/30 hover:bg-gray-800/40"
+                  }`}
+                >
+                  <p className="text-sm text-center">{presentation.title}</p>
+                  <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold">
+                    {isAudiencePresentation && (
+                      <span className="rounded-full bg-green-500/20 px-3 py-0.5 text-green-200">
+                        観客に投影中
+                      </span>
+                    )}
+                    {isViewingPresentation && !isAudiencePresentation && (
+                      <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-sky-200">
+                        管理画面で閲覧中
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          <p className="text-center text-gray-200">
-            緑の枠線が観客が見ているプレゼンです。
+          <p className="text-center text-gray-200 text-sm">
+            緑の枠線は観客に表示中、青の枠線は管理画面のみで閲覧中のプレゼンです。
           </p>
         </div>
       )}
@@ -318,33 +404,38 @@ export default function Presenter({ params }: { params: { id: string } }) {
         </div>
       </div>
       <div className="py-6 flex flex-col w-full gap-3 px-6">
-        {transcriptsData.map((transcript) => (
-          <div
-            id={transcript.id}
-            className={`flex flex-col gap-2 px-3 py-1 rounded-lg border  ${
-              presentationData.sync_id == transcript.id
-                ? " border-green-500 border-2"
-                : "border-gray-300"
-            }`}
-            key={transcript.id}
-            onClick={() => handleOnClickTranscript(transcript.id)}
-          >
-            <div className="flex gap-2 text-sm text-gray-200">
-              <span>{transcript.order}</span>
-              <span>{transcript.voice_path}</span>
-            </div>
-            <p
-              className={` ${
-                presentationData.sync_id == transcript.id ? "font-bold" : ""
+        {transcriptsData.map((transcript) => {
+          const isActive = presentationData.sync_id === transcript.id;
+          return (
+            <div
+              id={transcript.id}
+              className={`flex flex-col gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                isActive
+                  ? "border-green-500/90 bg-green-500/10"
+                  : "border-gray-600 hover:border-gray-400"
               }`}
+              key={transcript.id}
+              onClick={() => handleOnClickTranscript(transcript.id)}
+              aria-current={isActive ? "true" : undefined}
             >
-              {transcript.transcript}
-            </p>
-            <p className="text-sm text-gray-200">
-              {transcript.script || "スクリプトがありません"}
-            </p>
-          </div>
-        ))}
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-200">
+                <span>{transcript.order}</span>
+                <span>{transcript.voice_path}</span>
+                {isActive && (
+                  <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs text-green-200">
+                    観客に表示中
+                  </span>
+                )}
+              </div>
+              <p className={isActive ? "font-bold" : ""}>
+                {transcript.transcript}
+              </p>
+              <p className="text-sm text-gray-200">
+                {transcript.script || "スクリプトがありません"}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </main>
   );
