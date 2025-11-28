@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "../../../../../firebase/database";
 import {
   collection,
@@ -46,6 +46,40 @@ export default function Presenter({ params }: { params: { id: string } }) {
   const [groupOtherPresentationData, setGroupOtherPresentationData] = useState<
     PresentationData[]
   >([]);
+  const [copiedLabel, setCopiedLabel] = useState<string>("");
+
+  const shareableUrls = useMemo(() => {
+    const baseUrl = "https://script.tedxutsukuba.com";
+    const conferencePath = `/conference/${params.id}`;
+    return [
+      {
+        label: "翻訳操作側",
+        url: `${baseUrl}${conferencePath}/control`,
+      },
+      {
+        label: "ユーザ端末",
+        url: `${baseUrl}${conferencePath}`,
+      },
+      {
+        label: "スクリーン用",
+        url: `${baseUrl}${conferencePath}/transcript`,
+      },
+      {
+        label: "スピーカー字幕用",
+        url: `${baseUrl}${conferencePath}/speaker`,
+      },
+    ];
+  }, [params.id]);
+
+  const handleCopyUrl = async (label: string, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLabel(label);
+      setTimeout(() => setCopiedLabel(""), 2000);
+    } catch (error) {
+      console.error("Failed to copy url", error);
+    }
+  };
 
   useEffect(() => {
     // 選択している要素が画面に表示されるようにスクロールする
@@ -259,6 +293,30 @@ export default function Presenter({ params }: { params: { id: string } }) {
         <span>初期化</span>
         <span className="text-xs">（観客には何も表示されないようにする）</span>
       </button>
+      <div className="w-full max-w-4xl px-6 flex flex-col gap-2">
+        <p className="text-sm text-gray-200">
+          共有リンクコピー（URLは固定です。確認後に送信してください）
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {shareableUrls.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => handleCopyUrl(item.label, item.url)}
+              className="flex flex-col items-start gap-1 rounded-lg border border-gray-700 bg-gray-900/60 px-4 py-3 text-left hover:border-white"
+            >
+              <span className="text-sm font-semibold text-white">
+                {item.label}
+              </span>
+              <span className="text-xs text-gray-300 break-all">
+                {item.url}
+              </span>
+              {copiedLabel === item.label && (
+                <span className="text-xs text-green-400">コピーしました</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="py-6 flex flex-col w-full gap-3 px-6">
         {transcriptsData.map((transcript) => (
           <div
