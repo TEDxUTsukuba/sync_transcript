@@ -38,10 +38,11 @@ export default function Audience({ params }: { params: { id: string } }) {
     {} as transcriptData
   );
   const [mainFontSize, setMainFontSize] = useState(3);
-  const [subFontSize, setSubFontSize] = useState(3);
+  const [subFontSize, setSubFontSize] = useState(0.9);
 
   const mainFontSizeRef = useRef<HTMLInputElement>(null);
   const subFontSizeRef = useRef<HTMLInputElement>(null);
+  const activeScriptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let unsubscribePresentation: any = null;
@@ -131,48 +132,23 @@ export default function Audience({ params }: { params: { id: string } }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationData.sync_id, transcriptsData]);
 
-  const previousTranscriptData = useMemo(() => {
-    const order = showTranscriptData.order - 1;
-    if (order < 0) {
-      return {} as transcriptData;
+  // 表示するスクリプトの範囲を計算（前後3件ずつ）
+  const visibleScripts = useMemo(() => {
+    if (!showTranscriptData.order && showTranscriptData.order !== 0) {
+      return transcriptsData.slice(0, 7); // 初期状態では最初の7件
     }
 
-    const targetTranscript = transcriptsData.find(
-      (item) => item.order == order
-    );
+    const currentOrder = showTranscriptData.order;
+    const beforeCount = 3;
+    const afterCount = 3;
 
-    if (targetTranscript) {
-      return targetTranscript;
-    } else {
-      return {} as transcriptData;
-    }
+    return transcriptsData.filter((item) => {
+      return (
+        item.order >= currentOrder - beforeCount &&
+        item.order <= currentOrder + afterCount
+      );
+    });
   }, [showTranscriptData.order, transcriptsData]);
-
-  const nextTranscriptData = useMemo(() => {
-    if (showTranscriptData.order === undefined) {
-      setTimeout(() => {
-        const targetTranscript = transcriptsData.find(
-          (item) => item.order == 0
-        );
-        if (targetTranscript) {
-          return targetTranscript;
-        } else {
-          return {} as transcriptData;
-        }
-      }, 1000);
-    }
-
-    const order = showTranscriptData.order + 1;
-    const targetTranscript = transcriptsData.find(
-      (item) => item.order == order
-    );
-
-    if (targetTranscript) {
-      return targetTranscript;
-    } else {
-      return {} as transcriptData;
-    }
-  }, [transcriptsData, showTranscriptData.order]);
 
   useEffect(() => {
     const defaultMainFontSize = localStorage.getItem("mainFontSize");
@@ -193,28 +169,61 @@ export default function Audience({ params }: { params: { id: string } }) {
     localStorage.setItem("subFontSize", subFontSize.toString());
   };
 
+  // アクティブなスクリプトが変わったら自動スクロール
+  useEffect(() => {
+    if (activeScriptRef.current) {
+      activeScriptRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    }
+  }, [showTranscriptData.id]);
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="text-center">
         <p className="p-3 text-gray-500">スピーカー</p>
       </div>
-      <div
-        className={`fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen p-6 flex flex-col justify-center items-center gap-6`}
-      >
-        <div className="flex flex-col gap-6">
-          <p
-            className="text-center leading-loose text-white"
-            style={{ fontSize: `${mainFontSize}rem` }}
-          >
-            {showTranscriptData.script}
-          </p>
-          <p className="text-center text-2xl">👇</p>
-          <p
-            style={{ fontSize: `${subFontSize}rem` }}
-            className="text-center font-bold  text-xl leading-loose text-gray-500"
-          >
-            {nextTranscriptData.script}
-          </p>
+      <div className="fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen overflow-hidden">
+        <div
+          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center py-[50vh] px-2"
+          style={{ gap: `${1 * subFontSize}rem` }}
+        >
+          {visibleScripts.length > 0 ? (
+            visibleScripts.map((script) => {
+              const isActive = script.id === showTranscriptData.id;
+              const fontSize = mainFontSize;
+              const textColor = isActive ? "text-white" : "text-gray-500";
+              const fontWeight = "font-bold";
+              // 選択時は拡大なし(scale: 1)、非選択時はsubFontSizeで縮小
+              const scale = isActive ? 1 : subFontSize;
+              const opacity = isActive ? "opacity-100" : "opacity-60";
+
+              return (
+                <div
+                  key={script.id}
+                  ref={isActive ? activeScriptRef : null}
+                  className={`text-center leading-relaxed transition-all duration-300 ${textColor} ${fontWeight} ${opacity}`}
+                  style={{
+                    fontSize: `${fontSize}rem`,
+                    maxWidth: "90vw",
+                    transform: `scale(${scale})`,
+                    transformOrigin: "center center",
+                    wordBreak: "keep-all",
+                    overflowWrap: "anywhere",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {script.script || "スクリプトがありません"}
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-3xl font-bold text-gray-500">
+              スクリプトを読み込んでいます...
+            </p>
+          )}
         </div>
       </div>
       <div className="fixed p-3 text-gray-400 top-0 left-0 text-xs">
