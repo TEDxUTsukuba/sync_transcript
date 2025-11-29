@@ -257,8 +257,17 @@ export default function Presenter({ params }: { params: { id: string } }) {
     <main className="flex min-h-screen flex-col text-white bg-black gap-6 container mx-auto items-center">
       <div className="py-2">
         <p className="text-white">
-          プレゼンター（管理者）- {presentationData.title} -{" "}
+          プレゼンター（管理者） - {presentationData.title} -{" "}
           {presentationData.sync_id}
+        </p>
+        <p className="text-xs text-center text-gray-300">
+          グループ:{" "}
+          {groupData.name ? (
+            <span className="font-semibold text-white">{groupData.name}</span>
+          ) : (
+            "取得中..."
+          )}{" "}
+          <span className="text-gray-500">(ID: {groupData.id || "-"})</span>
         </p>
         <p className="text-xs text-center text-gray-200">
           上下キーでsync_idを更新できます。(クリックでも可)
