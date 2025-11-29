@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { db } from "../../../../../firebase/database";
-import storage from "../../../../../firebase/storage";
 import {
   collection,
   doc,
@@ -11,7 +10,6 @@ import {
   orderBy,
   query,
 } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
 import { Input } from "@/components/ui/input";
 
 interface PresentationData {
@@ -29,7 +27,6 @@ interface transcriptData {
   id: string;
   order: number;
   script: string;
-  voice_url: string;
 }
 
 export default function Audience({ params }: { params: { id: string } }) {
@@ -49,6 +46,7 @@ export default function Audience({ params }: { params: { id: string } }) {
   useEffect(() => {
     let unsubscribePresentation: any = null;
     let unsubscribeGroup: any = null;
+    let currentPresentationId: string | null = null;
 
     async function subscribeGroup() {
       if (!params.id) return;
@@ -60,8 +58,10 @@ export default function Audience({ params }: { params: { id: string } }) {
           const presentationSyncId = groupData.presentation_sync_id;
 
           if (presentationSyncId) {
-            if (presentationData.sync_id !== presentationSyncId) {
+            if (currentPresentationId !== presentationSyncId) {
+              currentPresentationId = presentationSyncId;
               await subscribePresentation(presentationSyncId);
+              await getAllTranscripts(presentationSyncId);
             }
           }
         }
@@ -83,7 +83,6 @@ export default function Audience({ params }: { params: { id: string } }) {
           setPresentationData(serializedData);
         }
       );
-      getAllTranscripts(presentationId); // presentationIdが変更されたらtranscriptsも取得し直す
     }
 
     async function getAllTranscripts(presentationId: string) {
@@ -91,17 +90,12 @@ export default function Audience({ params }: { params: { id: string } }) {
       const transcriptRef = collection(presentationRef, "transcripts");
       const sortedByOrderTranscriptRef = query(transcriptRef, orderBy("order"));
       await getDocs(sortedByOrderTranscriptRef).then((querySnapshot) => {
-        const data: any = [];
-        querySnapshot.forEach(async (doc) => {
-          const voice_path = doc.data().voice_path;
-          const voice_path_ref = ref(storage, voice_path);
-          const url = await getDownloadURL(voice_path_ref);
-
+        const data: transcriptData[] = [];
+        querySnapshot.forEach((doc) => {
           data.push({
             id: doc.id,
             order: doc.data().order,
             script: doc.data().script,
-            voice_url: url,
           });
         });
         setTranscriptsData(data);
