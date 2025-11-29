@@ -45,6 +45,7 @@ export default function Presenter({ params }: { params: { id: string } }) {
     PresentationData[]
   >([]);
   const [copiedLabel, setCopiedLabel] = useState<string>("");
+  const [clearingAll, setClearingAll] = useState<boolean>(false);
 
   const shareableUrls = useMemo(() => {
     const baseUrl = "https://script.tedxutsukuba.com";
@@ -215,6 +216,36 @@ export default function Presenter({ params }: { params: { id: string } }) {
     });
   };
 
+  const clearAllSyncIDs = async () => {
+    if (!groupData.id) return;
+    if (
+      !confirm(
+        "グループ内の全てのプレゼンテーションの表示を初期化します。よろしいですか？"
+      )
+    ) {
+      return;
+    }
+    setClearingAll(true);
+    try {
+      const presentationRef = collection(db, "presentation");
+      const q = query(presentationRef, where("group", "==", groupData.id));
+      const querySnapshot = await getDocs(q);
+      const updates = querySnapshot.docs.map((docSnap) =>
+        updateDoc(doc(db, "presentation", docSnap.id), { sync_id: "" })
+      );
+      await Promise.all(updates);
+      console.log(
+        "Cleared sync_id for all presentations in group:",
+        groupData.id
+      );
+    } catch (error) {
+      console.error("Failed to clear all sync_id:", error);
+      alert("初期化中にエラーが発生しました。コンソールを確認してください。");
+    } finally {
+      setClearingAll(false);
+    }
+  };
+
   // 上下のキーでsync_idを更新する
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -382,15 +413,25 @@ export default function Presenter({ params }: { params: { id: string } }) {
             </p>
           </div>
         )}
-        <button
-          onClick={clearSyncID}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg"
-        >
-          <span>初期化</span>
-          <span className="text-xs">
-            （観客には何も表示されないようにする）
-          </span>
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={clearSyncID}
+            className="bg-blue-500 text-white px-6 py-2 rounded-lg"
+          >
+            <span>初期化</span>
+            <span className="text-xs">
+              （観客には何も表示されないようにする）
+            </span>
+          </button>
+          <button
+            onClick={clearAllSyncIDs}
+            disabled={clearingAll}
+            className="bg-red-600 text-white px-6 py-2 rounded-lg"
+          >
+            <span>グループ内すべて初期化</span>
+            {clearingAll && <span className="text-xs ml-2">処理中...</span>}
+          </button>
+        </div>
         <div className="w-full max-w-4xl px-6 flex flex-col gap-2">
           <p className="text-sm text-gray-200">
             共有リンクコピー（URLは固定です。確認後に送信してください）
