@@ -174,7 +174,7 @@ export default function Audience({ params }: { params: { id: string } }) {
     if (activeScriptRef.current) {
       activeScriptRef.current.scrollIntoView({
         behavior: "smooth",
-        block: "start",
+        block: "center",
         inline: "center",
       });
     }
@@ -187,7 +187,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       </div>
       <div className="fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen overflow-hidden">
         <div
-          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center py-[40vh] px-2"
+          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center py-[10vh] px-2"
           style={{ gap: `${1 * subFontSize}rem` }}
         >
           {visibleScripts.length > 0 ? (
