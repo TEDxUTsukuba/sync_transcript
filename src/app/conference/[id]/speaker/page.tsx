@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface PresentationData {
+  id: string;
   title: string;
   sync_id: string;
   group: string;
@@ -39,10 +40,12 @@ export default function Audience({ params }: { params: { id: string } }) {
   );
   const [mainFontSize, setMainFontSize] = useState(3);
   const [subFontSize, setSubFontSize] = useState(0.9);
+  const [saveMessage, setSaveMessage] = useState<string>("");
 
   const mainFontSizeRef = useRef<HTMLInputElement>(null);
   const subFontSizeRef = useRef<HTMLInputElement>(null);
   const activeScriptRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let unsubscribePresentation: any = null;
@@ -77,6 +80,7 @@ export default function Audience({ params }: { params: { id: string } }) {
         (doc) => {
           const data: any = doc.data();
           const serializedData = {
+            id: doc.id,
             title: data.title || "",
             sync_id: data.sync_id || "",
             group: data.group || "",
@@ -151,32 +155,67 @@ export default function Audience({ params }: { params: { id: string } }) {
   }, [showTranscriptData.order, transcriptsData]);
 
   useEffect(() => {
-    const defaultMainFontSize = localStorage.getItem("mainFontSize");
-    if (defaultMainFontSize) {
-      setMainFontSize(parseFloat(defaultMainFontSize));
+    if (!presentationData.id) return;
+    const key = `speaker_settings_${presentationData.id}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const obj = JSON.parse(saved);
+        if (typeof obj.mainFontSize === "number")
+          setMainFontSize(obj.mainFontSize);
+        if (typeof obj.subFontSize === "number")
+          setSubFontSize(obj.subFontSize);
+      } catch (e) {
+        // fallback: グローバル値
+        const defaultMainFontSize = localStorage.getItem("mainFontSize");
+        if (defaultMainFontSize)
+          setMainFontSize(parseFloat(defaultMainFontSize));
+        const defaultSubFontSize = localStorage.getItem("subFontSize");
+        if (defaultSubFontSize) setSubFontSize(parseFloat(defaultSubFontSize));
+      }
+    } else {
+      // fallback: グローバル値
+      const defaultMainFontSize = localStorage.getItem("mainFontSize");
+      if (defaultMainFontSize) setMainFontSize(parseFloat(defaultMainFontSize));
+      const defaultSubFontSize = localStorage.getItem("subFontSize");
+      if (defaultSubFontSize) setSubFontSize(parseFloat(defaultSubFontSize));
     }
-
-    const defaultSubFontSize = localStorage.getItem("subFontSize");
-    if (defaultSubFontSize) {
-      setSubFontSize(parseFloat(defaultSubFontSize));
-    }
-    console.log(defaultMainFontSize, defaultSubFontSize);
-  }, []);
+  }, [presentationData.id]);
 
   const saveFontSize = () => {
-    console.log("save font size");
+    if (!presentationData.id) return;
+    const key = `speaker_settings_${presentationData.id}`;
+    const value = JSON.stringify({ mainFontSize, subFontSize });
+    localStorage.setItem(key, value);
+    // 後方互換: グローバルにも保存
     localStorage.setItem("mainFontSize", mainFontSize.toString());
     localStorage.setItem("subFontSize", subFontSize.toString());
+    setSaveMessage("保存しました");
+    setTimeout(() => setSaveMessage(""), 2000);
   };
 
-  // アクティブなスクリプトが変わったら自動スクロール
+  // アクティブなスクリプトが変わったら自動スクロール（10vh 下に表示）
   useEffect(() => {
-    if (activeScriptRef.current) {
-      activeScriptRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "center",
-      });
+    const container = scrollContainerRef.current;
+    const el = activeScriptRef.current;
+    if (container && el) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+
+      // element top relative to container
+      const offsetTop = elRect.top - containerRect.top;
+
+      // 10vh from viewport top
+      const desiredOffset = window.innerHeight * 0.15;
+
+      // compute target scrollTop and clamp into valid range
+      const currentScrollTop = container.scrollTop;
+      let targetScrollTop = currentScrollTop + offsetTop - desiredOffset;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (targetScrollTop < 0) targetScrollTop = 0;
+      if (targetScrollTop > maxScroll) targetScrollTop = maxScroll;
+
+      container.scrollTo({ top: targetScrollTop, behavior: "smooth" });
     }
   }, [showTranscriptData.id]);
 
@@ -187,7 +226,8 @@ export default function Audience({ params }: { params: { id: string } }) {
       </div>
       <div className="fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen overflow-hidden">
         <div
-          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center py-[10vh] px-2"
+          ref={scrollContainerRef}
+          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-2"
           style={{ gap: `${1 * subFontSize}rem` }}
         >
           {visibleScripts.length > 0 ? (
@@ -243,7 +283,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       <div className="fixed p-3 text-gray-400 bottom-0 left-0 text-xs">
         <span>ID : {presentationData.sync_id}</span>
       </div>
-      <div className="fixed p-3 bottom-0 right-0 flex gap-2">
+      <div className="fixed p-3 bottom-0 right-0 flex gap-2 items-center">
         <button
           onClick={() => saveFontSize()}
           className="text-xs text-white border-white border rounded-md px-2 py-1"
@@ -265,6 +305,11 @@ export default function Audience({ params }: { params: { id: string } }) {
           onChange={(e) => setSubFontSize(parseFloat(e.target.value))}
           className="border-2 rounded-lg h-6 w-16 text-xs bg-black text-white p-2"
         />
+        {saveMessage && (
+          <span className="text-xs text-green-400 ml-2 transition-opacity duration-300">
+            {saveMessage}
+          </span>
+        )}
       </div>
     </main>
   );
