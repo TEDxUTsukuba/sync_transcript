@@ -132,15 +132,15 @@ export default function Audience({ params }: { params: { id: string } }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationData.sync_id, transcriptsData]);
 
-  // 表示するスクリプトの範囲を計算（前後3件ずつ）
+  // 表示するスクリプトの範囲を計算（前3件、後ろ6件）
   const visibleScripts = useMemo(() => {
     if (!showTranscriptData.order && showTranscriptData.order !== 0) {
-      return transcriptsData.slice(0, 7); // 初期状態では最初の7件
+      return transcriptsData.slice(0, 10); // 初期状態では最初の10件
     }
 
     const currentOrder = showTranscriptData.order;
     const beforeCount = 3;
-    const afterCount = 3;
+    const afterCount = 6;
 
     return transcriptsData.filter((item) => {
       return (
@@ -174,7 +174,7 @@ export default function Audience({ params }: { params: { id: string } }) {
     if (activeScriptRef.current) {
       activeScriptRef.current.scrollIntoView({
         behavior: "smooth",
-        block: "center",
+        block: "start",
         inline: "center",
       });
     }
@@ -187,7 +187,7 @@ export default function Audience({ params }: { params: { id: string } }) {
       </div>
       <div className="fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full h-screen overflow-hidden">
         <div
-          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center py-[50vh] px-2"
+          className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center py-[40vh] px-2"
           style={{ gap: `${1 * subFontSize}rem` }}
         >
           {visibleScripts.length > 0 ? (
@@ -198,7 +198,15 @@ export default function Audience({ params }: { params: { id: string } }) {
               const fontWeight = "font-bold";
               // 選択時は拡大なし(scale: 1)、非選択時はsubFontSizeで縮小
               const scale = isActive ? 1 : subFontSize;
-              const opacity = isActive ? "opacity-100" : "opacity-60";
+
+              // 前後の文章で透明度を変える
+              const isPast = script.order < showTranscriptData.order;
+              const isFuture = script.order > showTranscriptData.order;
+              const opacity = isActive
+                ? "opacity-100"
+                : isPast
+                ? "opacity-30" // 前の文章は薄く
+                : "opacity-95"; // 後ろの文章は少し濃く
 
               return (
                 <div
@@ -253,6 +261,7 @@ export default function Audience({ params }: { params: { id: string } }) {
           type="number"
           ref={subFontSizeRef}
           defaultValue={subFontSize}
+          step={0.1}
           onChange={(e) => setSubFontSize(parseFloat(e.target.value))}
           className="border-2 rounded-lg h-6 w-16 text-xs bg-black text-white p-2"
         />
